@@ -111,12 +111,14 @@ void drawSpawnLogo(int cx, int cy, int radius) {
 // Step every star towards the viewer, project it, and plot it.
 void updateStars(int speed) {
   for (int i = 0; i < NUM_STARS; i++) {
-    stars[i].z -= speed;
-
-    if (stars[i].z <= 0) {
+    // z is unsigned, so respawn before subtracting. Subtracting first and
+    // testing for zero afterwards lets it wrap round to 255 instead.
+    if (stars[i].z <= speed) {
       stars[i].x = random(-64, 64);
       stars[i].y = random(-32, 32);
       stars[i].z = 64;
+    } else {
+      stars[i].z -= speed;
     }
 
     int px = (stars[i].x * 64) / stars[i].z + 64;
