@@ -7,13 +7,18 @@ An animated boot splash for the Spawn.Co logo, running on an Arduino Uno with a
 
 ## What it does
 
-The sequence loops every eight seconds:
+The sequence loops every nine seconds or so:
 
 | Time | Screen |
 | --- | --- |
-| 0.0s to 3.5s | the logo |
+| 0.0s to 1.0s | the starfield on its own |
+| 1.0s to 1.8s | the star out of the logo grows in from a point |
+| 1.8s to 3.5s | the rest of the mark joins it |
 | 3.5s to 7.0s | the SPAWN.CO wordmark |
-| 7.0s to 8.0s | the starfield speeds up, then the sequence restarts |
+| 7.0s to 9.2s | back to the starfield, then it loops |
+
+The loop point is deliberately the same picture the sequence opens on, so the
+restart does not show.
 
 A 25 star field runs behind all of it. Each star holds an x, y and a depth, and
 gets projected to the screen by dividing by that depth, so stars near the viewer
