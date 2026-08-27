@@ -5,9 +5,6 @@ An animated boot splash for the Spawn.Co logo, running on an Arduino Uno with a
 
 ![The splash running in Wokwi](SPAWN.CO.gif)
 
-The recording is from an earlier build, so what you see running now looks
-a little different.
-
 ## What it does
 
 The sequence loops every eight seconds:
