@@ -10,15 +10,45 @@
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// One star. z is depth, smaller means closer to the viewer.
+// One star. z is depth and has to be signed, otherwise it wraps instead of
+// hitting the reset below.
 struct Star {
   int8_t x, y;
-  uint8_t z;
+  int16_t z;
 };
 
 const int NUM_STARS = 25;
 Star stars[NUM_STARS];
 unsigned long startTime;
+
+// Logo artwork, kept in flash rather than RAM.
+const uint8_t LOGO_WIDTH = 19;
+const uint8_t LOGO_HEIGHT = 22;
+
+const uint8_t SPAWN_LOGO[22][19] PROGMEM = {
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0},
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0},
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,0,0,0},
+  {0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,0,0},
+  {0,0,0,0,1,1,0,0,0,0,2,2,2,2,2,2,2,2,2},
+  {0,0,1,1,1,1,0,0,0,0,0,0,2,2,2,2,2,0,0},
+  {0,1,1,1,1,1,0,0,0,0,0,0,0,2,2,2,0,0,0},
+  {0,1,1,1,1,1,0,0,0,0,0,0,0,0,2,0,0,0,0},
+  {1,1,1,1,1,1,0,0,0,0,0,0,0,0,2,0,0,0,0},
+  {1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0},
+  {1,1,1,1,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0},
+  {1,1,1,1,1,1,0,0,0,1,1,1,1,0,0,0,0,0,0},
+  {0,1,1,1,1,1,0,0,0,1,1,1,1,1,0,0,0,0,0},
+  {0,1,1,1,1,1,0,0,0,1,1,1,1,1,0,0,0,0,0},
+  {0,0,1,1,1,1,0,0,0,1,1,1,1,1,1,0,0,0,0},
+  {0,0,0,0,1,1,0,0,0,1,1,1,1,1,1,0,0,0,0},
+  {0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0},
+  {0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0},
+  {0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0}
+};
 
 void setup() {
   Serial.begin(9600);
@@ -44,19 +74,12 @@ void loop() {
   unsigned long elapsed = millis() - startTime;
 
   if (elapsed < 3500) {
-    // Sparkle grows in first, then the logo appears next to it.
+    // Logo on its own, stars drifting behind it.
     updateStars(2);
-
-    if (elapsed < 800) {
-      int sparkleSize = map(elapsed, 0, 800, 0, 6);
-      drawSparkle(72, 18, sparkleSize);
-    } else {
-      drawSparkle(72, 18, 5);
-      drawSpawnLogo(60, 32, 10);
-    }
+    drawSpawnMatrixLogoSolid(49, 15);
 
   } else if (elapsed < 7000) {
-    // Wordmark, stars still drifting behind it.
+    // Wordmark.
     updateStars(2);
     display.setTextSize(2);
     display.setTextColor(SSD1306_WHITE);
@@ -75,50 +98,34 @@ void loop() {
   delay(20);
 }
 
-// Four points, built from two triangles per axis.
-void drawSparkle(int cx, int cy, int r) {
-  if (r <= 0) return;
+// Scales the 19x22 artwork up to 29x33 by nearest neighbour. Any non zero
+// value in the matrix is drawn, so the shape comes out filled.
+void drawSpawnMatrixLogoSolid(int x, int y) {
+  int targetW = 29;
+  int targetH = 33;
 
-  int w = (r > 2) ? r / 2 : 1;
+  for (int py = 0; py < targetH; py++) {
+    for (int px = 0; px < targetW; px++) {
+      int srcC = (px * LOGO_WIDTH) / targetW;
+      int srcR = (py * LOGO_HEIGHT) / targetH;
 
-  display.fillTriangle(cx, cy - r, cx - w, cy, cx + w, cy, SSD1306_WHITE);
-  display.fillTriangle(cx, cy + r, cx - w, cy, cx + w, cy, SSD1306_WHITE);
-  display.fillTriangle(cx - r, cy, cx, cy - w, cx, cy + w, SSD1306_WHITE);
-  display.fillTriangle(cx + r, cy, cx, cy - w, cx, cy + w, SSD1306_WHITE);
-}
-
-// Filled half circles, drawn a scanline at a time.
-void drawLeftHalfCircle(int cx, int cy, int r) {
-  for (int y = -r; y <= r; y++) {
-    int w = round(sqrt(r * r - y * y));
-    display.drawFastHLine(cx - w, cy + y, w, SSD1306_WHITE);
+      uint8_t pixelVal = pgm_read_byte(&(SPAWN_LOGO[srcR][srcC]));
+      if (pixelVal > 0) {
+        display.drawPixel(x + px, y + py, SSD1306_WHITE);
+      }
+    }
   }
-}
-
-void drawRightHalfCircle(int cx, int cy, int r) {
-  for (int y = -r; y <= r; y++) {
-    int w = round(sqrt(r * r - y * y));
-    display.drawFastHLine(cx, cy + y, w, SSD1306_WHITE);
-  }
-}
-
-// Two offset half circles, so they read as interlocking crescents.
-void drawSpawnLogo(int cx, int cy, int radius) {
-  drawLeftHalfCircle(cx - 2, cy - 6, radius);
-  drawRightHalfCircle(cx + 2, cy + 6, radius);
 }
 
 // Step every star towards the viewer, project it, and plot it.
 void updateStars(int speed) {
   for (int i = 0; i < NUM_STARS; i++) {
-    // z is unsigned, so respawn before subtracting. Subtracting first and
-    // testing for zero afterwards lets it wrap round to 255 instead.
-    if (stars[i].z <= speed) {
+    stars[i].z -= speed;
+
+    if (stars[i].z <= 0) {
       stars[i].x = random(-64, 64);
       stars[i].y = random(-32, 32);
       stars[i].z = 64;
-    } else {
-      stars[i].z -= speed;
     }
 
     int px = (stars[i].x * 64) / stars[i].z + 64;

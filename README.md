@@ -5,14 +5,16 @@ An animated boot splash for the Spawn.Co logo, running on an Arduino Uno with a
 
 ![The splash running in Wokwi](SPAWN.CO.gif)
 
+The recording is from an earlier build, so what you see running now looks
+a little different.
+
 ## What it does
 
 The sequence loops every eight seconds:
 
 | Time | Screen |
 | --- | --- |
-| 0.0s to 0.8s | a four pointed sparkle grows in |
-| 0.8s to 3.5s | the logo, two interlocking crescents, appears beside it |
+| 0.0s to 3.5s | the logo |
 | 3.5s to 7.0s | the SPAWN.CO wordmark |
 | 7.0s to 8.0s | the starfield speeds up, then the sequence restarts |
 
@@ -55,3 +57,8 @@ libraries below through the Library Manager, and upload.
 | `diagram.json` | Wokwi wiring |
 | `libraries.txt` | Wokwi library list |
 | `SPAWN.CO.gif` | recording of the sequence |
+
+## Credits
+
+The logo artwork came from [jsnns](https://github.com/jsnns), who sent it over
+as pixel data. Thank you.
